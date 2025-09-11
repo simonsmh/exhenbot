@@ -15,9 +15,15 @@ services:
     image: ghcr.io/simonsmh/exhenbot:main
     env_file: 
       - stack.env
+    volumes:
+      - exhenbot-data:/app/.exhenbot
     restart: always
     networks:
       - internal_network
+
+volumes:
+  postgres-data:
+  exhenbot-data:
 
 networks:
   internal_network:
