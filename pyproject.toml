@@ -1,0 +1,22 @@
+[project]
+name = "exhenbot"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "httpx[http2]>=0.27.2",
+    "lxml>=6.0.1",
+    "tortoise-orm[accel]>=0.21.6",
+    "aiosqlite>=0.20.0",
+    "python-telegram-bot[all]>=21.6",
+    "telegraph>=2.2.0",
+    "loguru>=0.7.2",
+    "asyncpg>=0.30.0",
+]
+
+[project.scripts]
+exhenbot = "exhenbot.__main__:main"
+
+[tool.uv]
+package = true

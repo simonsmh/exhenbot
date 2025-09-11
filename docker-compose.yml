@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    env_file: 
+      - stack.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: always
+    networks:
+      - internal_network
+
+  exhenbot:
+    image: ghcr.io/simonsmh/exhenbot:main
+    env_file: 
+      - stack.env
+    restart: always
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    driver: bridge
