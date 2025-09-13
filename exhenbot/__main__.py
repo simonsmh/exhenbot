@@ -169,8 +169,8 @@ async def parse(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             else:
                 await message.reply_text(f"解析失败：{escape_markdown(url, 2)}")
     else:
-        if message is not None and message.text == "/parse":
-            await message.reply_text("参数不正确，例如：/parse <url>")
+        if message is not None and message.text.startswith("/parse"):
+            await message.reply_text("参数不正确，例如：/parse <url\\>")
 
 
 async def message_to_urls(
@@ -214,7 +214,7 @@ async def message_to_urls(
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.effective_message.reply_text(
-        "欢迎使用本 Bot，请使用 /parse <url> 解析链接"
+        "欢迎使用本 Bot，请使用 /parse <url\\> 解析链接"
     )
 
 
