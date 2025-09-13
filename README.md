@@ -12,7 +12,7 @@
 ### 功能
 
 - **消息监听与命令**：自动匹配 `https://e.hentai.org/g/<gid>/<token>`；支持 `/parse` 命令
-- **批处理任务**：配置 `TELEGRAM_CHAT_ID` 后按间隔自动搜索并推送
+- **批处理任务**：通过 `/add_task` 添加任务，`/clear_task` 清除当前会话任务；按间隔自动搜索并推送
 - **标签翻译**：本地缓存 EhTagTranslation 数据库，离线可用
 - **图床镜像**：Catbox URL 上传，失败自动重试
 - **数据库**：Tortoise ORM，支持 PostgreSQL/SQLite，自动建表
@@ -39,7 +39,6 @@ cp stack.env .env
 可选但强烈建议：
 
 - `TELEGRAPH_ACCESS_TOKEN`：Telegraph access token；未提供时运行期会自动创建匿名账户，但重启后不会保留令牌
-- `TELEGRAM_CHAT_ID`：开启定时搜索推送所需
 
 2) 启动
 
@@ -90,12 +89,15 @@ docker run --env-file stack.env --rm exhenbot:local
 
 - **LOCAL_DIR**：本地缓存目录，默认 `.exhenbot`
 
+- **TASK_CHECK**：任务校验键值，默认 `exhenbot:exhenbot`（用于 `/add_task` 鉴权）
+
 - ExHentai
   - **EXH_COOKIE**：必填；浏览器复制完整 `Cookie` 头
   - **EXH_SEMAPHORE_SIZE**：并发度，默认 `4`
   - **EXH_QUERY**：高级搜索语句，默认 `parody:"blue archive$" language:chinese$`
   - **EXH_CATOGORIES**：分类位掩码，默认 `1017`
   - **EXH_STAR**：评分下限，默认 `4`
+  - **EXH_QUERY_DEPTH**：搜索翻页深度，默认 `1`
 
 - Catbox
   - **CATBOX_USERHASH**：可选；设置后上传配额更稳
@@ -111,7 +113,6 @@ docker run --env-file stack.env --rm exhenbot:local
 
 - Telegram
   - **TELEGRAM_BOT_TOKEN**：必填
-  - **TELEGRAM_CHAT_ID**：开启定时任务所需（向该 chat 推送）
   - **TELEGRAM_JOB_INTERVAL**：定时任务间隔秒，默认 `600`
   - **TELEGRAM_API_BASE_URL**：默认 `https://api.telegram.org/bot`
   - **TELEGRAM_API_BASE_FILE_URL**：默认 `https://api.telegram.org/file/bot`
@@ -135,7 +136,23 @@ docker run --env-file stack.env --rm exhenbot:local
 /parse https://e.hentai.org/g/<gid>/<token>
 ```
 
-- 若设置了 `TELEGRAM_CHAT_ID`，服务会按 `TELEGRAM_JOB_INTERVAL` 进行搜索并推送新画廊。
+添加定时任务（将下述 JSON base64 编码后作为参数）：
+
+```json
+{"exhenbot":"exhenbot","search":"parody:\"blue archive$\" language:chinese$","catogories":1017,"star":4,"author_name":"exhenbot","author_url":"","query_depth":1}
+```
+
+```text
+/add_task <base64_of_above_json>
+```
+
+任务会按 `TELEGRAM_JOB_INTERVAL` 周期执行搜索并推送新画廊。
+
+清除当前会话的定时任务：
+
+```text
+/clear_task
+```
 
 消息内容包括：
 

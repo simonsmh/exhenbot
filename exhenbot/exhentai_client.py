@@ -4,7 +4,7 @@ import re
 import urllib.parse
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import httpx
 from loguru import logger
@@ -123,8 +123,6 @@ class ExHentaiClient:
             headers["Cookie"] = cookie_header
         self.client = httpx.AsyncClient(headers=headers, timeout=30)
         self.semaphore = asyncio.Semaphore(semaphore_size)
-        # Stores the `next` pagination marker extracted from the last search
-        self.last_search_next_gid: Optional[int] = None
 
     async def aclose(self) -> None:
         await self.client.aclose()
@@ -138,7 +136,7 @@ class ExHentaiClient:
         catogories: int = 761,
         star: int = 4,
         next_gid: Optional[int] = None,
-    ) -> List[GalleryEntry]:
+    ) -> Tuple[List[GalleryEntry], int | None]:
         """Search gallery list by query and return gallery entries.
 
         Parses each gallery row to extract:
@@ -199,10 +197,7 @@ class ExHentaiClient:
                 GalleryEntry(gid=gid_candidate, url=url, title=title, tags=tags)
             )
 
-        # Expose pagination marker for the next request
-        self.last_search_next_gid = last_gid_value
-
-        return entries
+        return entries, last_gid_value
 
     async def get_gallery_info(self, gallery_url: str) -> GalleryInfo:
         resp = await retry_request(self.client, method="GET", url=gallery_url)
@@ -468,14 +463,14 @@ class EhTagConverter:
             None,
         )
         if namespace_index is None:
-            return namespace, tag
+            return namespace.replace(" ", "_"), tag.replace(" ", "_")
         namespace_name = self.data["data"][namespace_index]["frontMatters"]["name"]
         tag_data = self.data["data"][namespace_index]["data"].get(tag)
         if tag_data is None:
-            return namespace_name, tag
+            return namespace_name.replace(" ", "_"), tag.replace(" ", "_")
         tag_name = tag_data.get("name", {}).get("text")
         if tag_name is None:
-            return namespace_name, tag
+            return namespace_name.replace(" ", "_"), tag.replace(" ", "_")
         return namespace_name.replace(" ", "_"), tag_name.replace(" ", "_")
 
     def batch_translate_tags(self, tag_strs: List[str]) -> dict[str, List[str]]:
