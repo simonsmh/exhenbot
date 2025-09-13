@@ -55,7 +55,7 @@ def load_settings() -> Settings:
         catbox_userhash=os.environ.get("CATBOX_USERHASH"),
         catbox_semaphore_size=int(os.environ.get("CATBOX_SEMAPHORE_SIZE", 4)),
         telegraph_author_name=os.environ.get("TELEGRAPH_AUTHOR_NAME", "exhenbot"),
-        telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL"),
+        telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"),
         telegraph_token=os.environ.get("TELEGRAPH_ACCESS_TOKEN"),
         db_url=os.environ.get("DATABASE_URL"),
         telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN"),

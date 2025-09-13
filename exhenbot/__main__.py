@@ -141,8 +141,6 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
                             except Exception:
                                 pass
                             break
-                else:
-                    logger.info(f"Failed to parse gallery: {e.gid} {e.title}")
 
 
 def generate_telegraph_message(gallery: Gallery) -> str:
