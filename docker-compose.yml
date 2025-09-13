@@ -13,6 +13,8 @@ services:
 
   exhenbot:
     image: ghcr.io/simonsmh/exhenbot:main
+    depends_on:
+      - postgres
     env_file: 
       - stack.env
     volumes:
