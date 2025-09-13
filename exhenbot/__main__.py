@@ -233,14 +233,18 @@ async def add_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             author_url=task_data.author_url or update.effective_chat.link,
             query_depth=task_data.query_depth,
         )
-        await update.effective_message.reply_text("任务添加成功")
+        reply = await update.effective_message.reply_text("任务添加成功")
+        await update.effective_message.delete()
+        await reply.delete()
     except ValueError:
         await update.effective_message.reply_text("参数错误")
 
 
 async def clear_task(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await delete_task(update.effective_chat.id)
-    await update.effective_message.reply_text("任务清除成功")
+    reply = await update.effective_message.reply_text("任务清除成功")
+    await update.effective_message.delete()
+    await reply.delete()
 
 
 async def post_init(application: Application) -> None:
