@@ -214,11 +214,15 @@ class ExHentaiClient:
         except Exception:
             gid = None
 
-        # Title: prefer english title in #gn, fallback to #gj or <title>
+        # Title: prefer english title in #gj, fallback to #gn or <title>
         title_node = doc.xpath('//h1[@id="gj"]')
         if title_node:
             title = title_node[0].text_content().strip()
-        else:
+        if not title:
+            title_node = doc.xpath('//h1[@id="gn"]')
+            if title_node:
+                title = title_node[0].text_content().strip()
+        if not title:
             title = (doc.xpath("//title/text()") or [""])[0].strip()
 
         # Tags: prefer explicit tag ids (ta_namespace:tag) -> "namespace:tag"

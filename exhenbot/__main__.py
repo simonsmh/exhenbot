@@ -115,12 +115,16 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
             logger.info(f"Found {len(entries)} galleries")
             for e in entries:
                 logger.info(f"Parsing gallery: {e.gid} {e.title}")
-                gallery = await parse_url(
-                    e.url,
-                    send_if_exists=False,
-                    author_name=t.author_name,
-                    author_url=t.author_url,
-                )
+                try:
+                    gallery = await parse_url(
+                        e.url,
+                        send_if_exists=False,
+                        author_name=t.author_name,
+                        author_url=t.author_url,
+                    )
+                except Exception as err:
+                    logger.error(f"Error parsing gallery: {e} {err}")
+                    continue
                 if gallery is not None:
                     logger.info(f"Sending gallery: {e.gid} {e.title}")
                     try:
