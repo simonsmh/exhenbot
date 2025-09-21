@@ -54,9 +54,10 @@ ehtag = EhTagConverter(local_dir=settings.local_dir)
 
 async def parse_url(
     url: str,
-    send_if_exists: bool = True,
     author_name: str | None = None,
     author_url: str | None = None,
+    send_if_exists: bool = True,
+    force_update: bool = False,
 ) -> Gallery | None:
     if author_name is None:
         author_name = settings.telegraph_author_name
@@ -64,7 +65,7 @@ async def parse_url(
         author_url = settings.telegraph_author_url
     gallery_info = await client.get_gallery_info(url)
     logger.info(f"Parsing gallery: {gallery_info.gid} {gallery_info.title}")
-    exist = await get_gallery(gallery_info.gid)
+    exist = await get_gallery(gallery_info.gid) if not force_update else None
     if exist is not None:
         logger.info(f"Gallery already exists: {gallery_info.gid} {gallery_info.title}")
         if not send_if_exists:
@@ -118,9 +119,9 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
                 try:
                     gallery = await parse_url(
                         e.url,
-                        send_if_exists=False,
                         author_name=t.author_name,
                         author_url=t.author_url,
+                        send_if_exists=False,
                     )
                 except Exception as err:
                     logger.error(f"Error parsing gallery: {e} {err}")
@@ -158,6 +159,7 @@ def generate_telegraph_message(gallery: Gallery) -> str:
 async def parse(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message, urls = await message_to_urls(update, context)
     if message is not None and urls:
+        force_update = message.text.startswith("/refresh")
         for url in urls:
             try:
                 await message.reply_chat_action(ChatAction.TYPING)
@@ -167,14 +169,18 @@ async def parse(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 url,
                 author_name=settings.telegraph_author_name,
                 author_url=settings.telegraph_author_url,
+                force_update=force_update,
             )
             if gallery is not None:
                 await message.reply_text(generate_telegraph_message(gallery))
             else:
                 await message.reply_text(f"解析失败：{escape_markdown(url, 2)}")
     else:
-        if message is not None and message.text.startswith("/parse"):
-            await message.reply_text("参数不正确，例如：/parse <url\\>")
+        if message is not None:
+            if message.text.startswith("/parse"):
+                await message.reply_text("参数不正确，例如：/parse <url\\>")
+            elif message.text.startswith("/refresh"):
+                await message.reply_text("参数不正确，例如：/refresh <url\\>")
 
 
 async def message_to_urls(
@@ -254,6 +260,7 @@ async def post_init(application: Application) -> None:
     await application.bot.set_my_commands(
         [
             ["parse", "获取匹配内容"],
+            ["refresh", "更新匹配内容"],
         ]
     )
     bot_me = await application.bot.get_me()
@@ -299,6 +306,7 @@ def main() -> None:
         MessageHandler(filters.Regex("^/clear_task"), clear_task, block=False)
     )
     application.add_handler(CommandHandler("parse", parse, block=False))
+    application.add_handler(CommandHandler("refresh", parse, block=False))
     application.add_handler(
         MessageHandler(
             filters.Entity(MessageEntity.URL)
