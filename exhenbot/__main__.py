@@ -23,7 +23,6 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from .catbox_client import CatboxUploader
 from .config import load_settings
 from .exhentai_client import EhTagConverter, ExHentaiClient
 from .storage import (
@@ -38,6 +37,7 @@ from .storage import (
     upsert_task,
 )
 from .telegraph_client import TelegraphClient
+from .uploader_client import FileUploader
 
 EHENTAI_URL_REGEX = r"https://e.hentai\.org/g/\d+/\w+"
 
@@ -45,7 +45,7 @@ settings = load_settings()
 client = ExHentaiClient(
     cookie_header=settings.exh_cookie, semaphore_size=settings.exh_semaphore_size
 )
-catbox = CatboxUploader(
+uploader = FileUploader(
     userhash=settings.catbox_userhash, semaphore_size=settings.catbox_semaphore_size
 )
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
@@ -75,7 +75,7 @@ async def parse_url(
     logger.info(f"Fetching MPV info: {gallery_info.gid} {gallery_info.title}")
     img_urls = await client.resolve_image_urls(mpv_info)
     logger.info(f"Uploading image URLs: {gallery_info.gid} {gallery_info.title}")
-    catbox_urls = await catbox.upload_image_urls(img_urls)
+    uploader_urls = await uploader.upload_image_urls(img_urls)
     logger.info(f"Translating tags: {gallery_info.gid} {gallery_info.title}")
     await ehtag.load_database()
     tags_dict = ehtag.batch_translate_tags(gallery_info.tags)
@@ -84,7 +84,7 @@ async def parse_url(
     logger.info(f"Creating telegraph page: {gallery_info.gid} {gallery_info.title}")
     telegraph_url = await telegraph.create_telegraph_page(
         title=gallery_info.title,
-        image_urls=catbox_urls,
+        image_urls=uploader_urls,
         author_name=author_name,
         author_url=author_url,
     )
@@ -269,7 +269,7 @@ async def post_init(application: Application) -> None:
 
 async def post_shutdown(application: Application) -> None:
     await client.aclose()
-    await catbox.aclose()
+    await uploader.aclose()
     await telegraph.aclose()
     await ehtag.aclose()
     await db_close()
