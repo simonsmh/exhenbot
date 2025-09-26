@@ -27,12 +27,7 @@ class FileUploader:
             return length > 0
         except Exception as e:
             logger.warning(f"HEAD request failed for {url}: {e}, trying GET request")
-            try:
-                resp = await self.client.get(url, timeout=20)
-                return len(resp.content) > 0
-            except Exception as get_e:
-                logger.warning(f"GET request also failed for {url}: {get_e}")
-                return False
+            return False
 
     async def _upload_catbox(self, url: str) -> str:
         data = {"reqtype": "urlupload", "userhash": self.userhash or "", "url": url}
