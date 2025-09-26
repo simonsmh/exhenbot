@@ -14,7 +14,7 @@ class FileUploader:
 
     def __init__(self, userhash: Optional[str] = None, semaphore_size: int = 4):
         self.userhash = userhash
-        self.client = httpx.AsyncClient(timeout=60)
+        self.client = httpx.AsyncClient(headers=self._HEADERS, timeout=60, follow_redirects=True, http2=True)
         self.semaphore = asyncio.Semaphore(semaphore_size)
 
     async def aclose(self) -> None:
@@ -41,7 +41,6 @@ class FileUploader:
             method="POST",
             url=self.CATBOX_URL,
             data=data,
-            headers=self._HEADERS,
         )
         r.raise_for_status()
         text = r.text.strip()
@@ -56,7 +55,6 @@ class FileUploader:
             method="POST",
             url=self.ZEROXZERO_URL,
             data=data,
-            headers=self._HEADERS,
         )
         r.raise_for_status()
         text = r.text.strip()
@@ -88,10 +86,7 @@ class FileUploader:
                     logger.error(f"Upload failed for {url}: {e}")
                     return None
 
-        coros = [upload_with_semaphore(url) for url in image_urls]
-        for coro in asyncio.as_completed(coros):
-            result = await coro
-            if result:
-                results.append(result)
+        tasks = [upload_with_semaphore(url) for url in image_urls]
+        results = await asyncio.gather(*tasks)
 
         return results

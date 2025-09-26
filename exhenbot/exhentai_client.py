@@ -121,7 +121,7 @@ class ExHentaiClient:
         headers = {}
         if cookie_header:
             headers["Cookie"] = cookie_header
-        self.client = httpx.AsyncClient(headers=headers, timeout=30)
+        self.client = httpx.AsyncClient(headers=headers, follow_redirects=True, http2=True)
         self.semaphore = asyncio.Semaphore(semaphore_size)
 
     async def aclose(self) -> None:
@@ -340,7 +340,7 @@ class EhTagConverter:
     SHA_URL = "https://cdn.jsdelivr.net/gh/EhTagTranslation/Database@release/sha"
 
     def __init__(self, local_dir: str):
-        self.client = httpx.AsyncClient(timeout=30, follow_redirects=True)
+        self.client = httpx.AsyncClient(timeout=30, follow_redirects=True, http2=True)
         self.data: Dict[str, Dict[str, Dict[str, str]]] = {}
         self.sha: Optional[str] = None
         self._loaded = False
