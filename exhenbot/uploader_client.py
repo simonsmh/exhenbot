@@ -10,13 +10,7 @@ from .utils import retry_request
 class FileUploader:
     CATBOX_URL = "https://catbox.moe/user/api.php"
     ZEROXZERO_URL = "https://0x0.st"
-    _HEADERS = {
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0"
-        )
-    }
+    _HEADERS = {"user-agent": "PostmanRuntime/7.47.1"}
 
     def __init__(self, userhash: Optional[str] = None, semaphore_size: int = 4):
         self.userhash = userhash
@@ -42,7 +36,13 @@ class FileUploader:
 
     async def _upload_catbox(self, url: str) -> str:
         data = {"reqtype": "urlupload", "userhash": self.userhash or "", "url": url}
-        r = await retry_request(self.client, method="POST", url=self.CATBOX_URL, data=data, headers=self._HEADERS)
+        r = await retry_request(
+            self.client,
+            method="POST",
+            url=self.CATBOX_URL,
+            data=data,
+            headers=self._HEADERS,
+        )
         r.raise_for_status()
         text = r.text.strip()
         if text.startswith("http"):
@@ -51,7 +51,13 @@ class FileUploader:
 
     async def _upload_0x0(self, url: str) -> str:
         data = {"url": url}
-        r = await retry_request(self.client, method="POST", url=self.ZEROXZERO_URL, data=data, headers=self._HEADERS)
+        r = await retry_request(
+            self.client,
+            method="POST",
+            url=self.ZEROXZERO_URL,
+            data=data,
+            headers=self._HEADERS,
+        )
         r.raise_for_status()
         text = r.text.strip()
         if text.startswith("http"):
@@ -63,7 +69,9 @@ class FileUploader:
             uploaded_url = await self._upload_catbox(url)
             if await self._check_content_length(uploaded_url):
                 return uploaded_url
-            logger.warning(f"Catbox returned empty content, fallback to 0x0.st for {url}")
+            logger.warning(
+                f"Catbox returned empty content, fallback to 0x0.st for {url}"
+            )
         except Exception as e:
             logger.warning(f"Catbox upload failed ({e}), fallback to 0x0.st for {url}")
 
