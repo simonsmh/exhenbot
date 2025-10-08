@@ -7,7 +7,7 @@ from loguru import logger
 async def retry_request(
     client: httpx.AsyncClient,
     *args,
-    max_retries: int = 3,
+    max_retries: int = 2,
     backoff_factor: float = 1.0,
     **kwargs,
 ) -> httpx.Response:
@@ -18,6 +18,9 @@ async def retry_request(
             response.raise_for_status()
             return response
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
+            if e.response.status_code == 403:
+                logger.error(f"Request failed with status code {e.response.status_code}: {e.response.text}")
+                raise
             if attempt == max_retries:
                 logger.error(f"Request failed after {max_retries + 1} attempts: {e}")
                 raise

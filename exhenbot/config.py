@@ -15,9 +15,8 @@ class Settings:
     exh_star: int
     exh_query_depth: int
 
-    # Catbox
-    catbox_userhash: str
-    catbox_semaphore_size: int
+    # File Uploader
+    fileuploader_semaphore_size: int
 
     # Telegraph
     telegraph_author_name: str
@@ -52,8 +51,7 @@ def load_settings() -> Settings:
         exh_catogories=int(os.environ.get("EXH_CATOGORIES", 1017)),
         exh_star=int(os.environ.get("EXH_STAR", 4)),
         exh_query_depth=int(os.environ.get("EXH_QUERY_DEPTH", 1)),
-        catbox_userhash=os.environ.get("CATBOX_USERHASH"),
-        catbox_semaphore_size=int(os.environ.get("CATBOX_SEMAPHORE_SIZE", 4)),
+        fileuploader_semaphore_size=int(os.environ.get("FILEUPLOADER_SEMAPHORE_SIZE", 10)),
         telegraph_author_name=os.environ.get("TELEGRAPH_AUTHOR_NAME", "exhenbot"),
         telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"),
         telegraph_token=os.environ.get("TELEGRAPH_ACCESS_TOKEN"),
@@ -66,5 +64,5 @@ def load_settings() -> Settings:
         telegram_api_base_url=os.environ.get("TELEGRAM_API_BASE_URL", "https://api.telegram.org/bot"),
         telegram_api_base_file_url=os.environ.get("TELEGRAM_API_BASE_FILE_URL", "https://api.telegram.org/file/bot"),
         telegram_local_mode=os.environ.get("TELEGRAM_LOCAL_MODE", "false") == "true",
-        telegram_semaphore_size=int(os.environ.get("TELEGRAM_SEMAPHORE_SIZE", 4)),
+        telegram_semaphore_size=int(os.environ.get("TELEGRAM_SEMAPHORE_SIZE")),
     )

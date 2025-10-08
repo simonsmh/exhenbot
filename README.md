@@ -99,9 +99,8 @@ docker run --env-file stack.env --rm exhenbot:local
   - **EXH_STAR**：评分下限，默认 `4`
   - **EXH_QUERY_DEPTH**：搜索翻页深度，默认 `1`
 
-- Catbox
-  - **CATBOX_USERHASH**：可选；设置后上传配额更稳
-  - **CATBOX_SEMAPHORE_SIZE**：并发度，默认 `4`
+- File Uploader
+  - **FILEUPLOADER_SEMAPHORE_SIZE**：并发度，默认 `4`
 
 - Telegraph
   - **TELEGRAPH_AUTHOR_NAME**：默认 `exhenbot`
@@ -177,7 +176,6 @@ docker run --env-file stack.env --rm exhenbot:local
 
 - **ExHentai 401/跳转**：`EXH_COOKIE` 无效或过期；确保使用完整 Cookie 且账户可访问 ExHentai
 - **Telegraph 失败**：提供 `TELEGRAPH_ACCESS_TOKEN` 更稳；或检查域名/网络
-- **Catbox 上传失败**：频繁失败时设置 `CATBOX_USERHASH`；检查网络
 - **Telegram 403**：机器人未加入目标会话或未先与机器人对话
 - **数据库连接失败**：核对 `DATABASE_URL`；未配置则会落到本地 `cache.db`
 

@@ -10,11 +10,13 @@ from .utils import retry_request
 class FileUploader:
     CATBOX_URL = "https://catbox.moe/user/api.php"
     ZEROXZERO_URL = "https://0x0.st"
+    FREEIMAGE_HOST_URL = "https://freeimage.host/api/1/upload"
     _HEADERS = {"user-agent": "PostmanRuntime/7.47.1"}
 
-    def __init__(self, userhash: Optional[str] = None, semaphore_size: int = 4):
-        self.userhash = userhash
-        self.client = httpx.AsyncClient(headers=self._HEADERS, timeout=60, follow_redirects=True, http2=True)
+    def __init__(self, semaphore_size: int = 4):
+        self.client = httpx.AsyncClient(
+            headers=self._HEADERS, timeout=60, follow_redirects=True, http2=True
+        )
         self.semaphore = asyncio.Semaphore(semaphore_size)
 
     async def aclose(self) -> None:
@@ -22,7 +24,7 @@ class FileUploader:
 
     async def _check_content_length(self, url: str) -> bool:
         try:
-            resp = await self.client.head(url, timeout=20)
+            resp = await self.client.head(url)
             length = int(resp.headers.get("Content-Length", "0"))
             return length > 0
         except Exception as e:
@@ -30,7 +32,7 @@ class FileUploader:
             return False
 
     async def _upload_catbox(self, url: str) -> str:
-        data = {"reqtype": "urlupload", "userhash": self.userhash or "", "url": url}
+        data = {"reqtype": "urlupload", "userhash": "", "url": url}
         r = await retry_request(
             self.client,
             method="POST",
@@ -57,16 +59,45 @@ class FileUploader:
             return text
         raise RuntimeError(f"0x0.st upload failed: {text}")
 
+    async def _upload_freeimagehost(self, url: str) -> str:
+        params = {
+            "key": "6d207e02198a847aa98d0a2a901485a5",
+            "source": url,
+            "format": "txt",
+        }
+        r = await retry_request(
+            self.client, method="POST", url=self.FREEIMAGE_HOST_URL, params=params
+        )
+        r.raise_for_status()
+        text = r.text.strip()
+        if text.startswith("http"):
+            return text
+        raise RuntimeError(f"Freeimage.host upload failed: {text}")
+
     async def upload_url(self, url: str) -> str:
         try:
             uploaded_url = await self._upload_catbox(url)
             if await self._check_content_length(uploaded_url):
                 return uploaded_url
             logger.warning(
-                f"Catbox returned empty content, fallback to 0x0.st for {url}"
+                f"Catbox returned empty content, fallback to freeimage.host for {url}"
             )
         except Exception as e:
-            logger.warning(f"Catbox upload failed ({e}), fallback to 0x0.st for {url}")
+            logger.warning(
+                f"Catbox upload failed ({e}), fallback to freeimage.host for {url}"
+            )
+
+        try:
+            uploaded_url = await self._upload_freeimagehost(url)
+            if await self._check_content_length(uploaded_url):
+                return uploaded_url
+            logger.warning(
+                f"Freeimage.host returned empty content, fallback to 0x0.st for {url}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Freeimage.host upload failed ({e}), fallback to 0x0.st for {url}"
+            )
 
         return await self._upload_0x0(url)
 

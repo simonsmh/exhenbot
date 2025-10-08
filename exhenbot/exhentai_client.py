@@ -116,16 +116,29 @@ class ImageDispatch:
 class ExHentaiClient:
     BASE_URL = "https://exhentai.org"
     API_URL = "https://s.exhentai.org/api.php"
+    RESET_URL = "https://e-hentai.org/home.php"
 
     def __init__(self, cookie_header: Optional[str] = None, semaphore_size: int = 4):
         headers = {}
         if cookie_header:
             headers["Cookie"] = cookie_header
-        self.client = httpx.AsyncClient(headers=headers, follow_redirects=True, http2=True)
+        self.client = httpx.AsyncClient(
+            headers=headers, follow_redirects=True, http2=True
+        )
         self.semaphore = asyncio.Semaphore(semaphore_size)
 
     async def aclose(self) -> None:
         await self.client.aclose()
+
+    async def reset_gp(self):
+        try:
+            data = {"reset_imagelimit": "Reset Quota"}
+            resp = await retry_request(
+                self.client, method="POST", url=self.RESET_URL, data=data
+            )
+            resp.raise_for_status()
+        except Exception as e:
+            logger.error(f"Failed to reset GP quota: {e}")
 
     # -----------------------------
     # Search
@@ -299,7 +312,7 @@ class ExHentaiClient:
     # API calls
     # -----------------------------
     async def imagedispatch(
-        self, gid: int, page: int, imgkey: str, mpvkey: str
+        self, gid: int, page: int, imgkey: str, mpvkey: str, s: Optional[str] = None
     ) -> ImageDispatch:
         payload = {
             "method": "imagedispatch",
@@ -308,11 +321,19 @@ class ExHentaiClient:
             "imgkey": imgkey,
             "mpvkey": mpvkey,
         }
+        if s is not None:
+            payload["s"] = s
         r = await retry_request(
             self.client, method="POST", url=self.API_URL, json=payload
         )
         r.raise_for_status()
         data = r.json()
+        ## check if result's i URL is accessable or retry with s
+        if data and data.get("i") is not None:
+            resp = await self.client.head(data["i"])
+            if resp.status_code != 200 and data.get("s") is not None:
+                logger.warning(f"Image dispatch failed, retrying with s: {data['i']}")
+                return await self.imagedispatch(gid, page, imgkey, mpvkey, data["s"])
         return ImageDispatch.from_dict(data)
 
     async def resolve_image_urls(self, mpv_info: MpvInfo) -> List[str]:

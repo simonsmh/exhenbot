@@ -46,7 +46,7 @@ client = ExHentaiClient(
     cookie_header=settings.exh_cookie, semaphore_size=settings.exh_semaphore_size
 )
 uploader = FileUploader(
-    userhash=settings.catbox_userhash, semaphore_size=settings.catbox_semaphore_size
+    semaphore_size=settings.fileuploader_semaphore_size
 )
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
 ehtag = EhTagConverter(local_dir=settings.local_dir)
@@ -115,6 +115,7 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
             )
             logger.info(f"Found {len(entries)} galleries")
             for e in entries:
+                await client.reset_gp()
                 logger.info(f"Parsing gallery: {e.gid} {e.title}")
                 try:
                     gallery = await parse_url(
