@@ -60,13 +60,13 @@ class FileUploader:
         raise RuntimeError(f"0x0.st upload failed: {text}")
 
     async def _upload_freeimagehost(self, url: str) -> str:
-        params = {
+        data = {
             "key": "6d207e02198a847aa98d0a2a901485a5",
             "source": url,
             "format": "txt",
         }
         r = await retry_request(
-            self.client, method="POST", url=self.FREEIMAGE_HOST_URL, params=params
+            self.client, method="POST", url=self.FREEIMAGE_HOST_URL, data=data
         )
         r.raise_for_status()
         text = r.text.strip()
