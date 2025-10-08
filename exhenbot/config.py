@@ -37,7 +37,7 @@ class Settings:
     telegram_api_base_url: str
     telegram_api_base_file_url: str
     telegram_local_mode: bool
-    telegram_semaphore_size: int
+    telegram_semaphore_size: str
 
 
 def load_settings() -> Settings:
@@ -64,5 +64,5 @@ def load_settings() -> Settings:
         telegram_api_base_url=os.environ.get("TELEGRAM_API_BASE_URL", "https://api.telegram.org/bot"),
         telegram_api_base_file_url=os.environ.get("TELEGRAM_API_BASE_FILE_URL", "https://api.telegram.org/file/bot"),
         telegram_local_mode=os.environ.get("TELEGRAM_LOCAL_MODE", "false") == "true",
-        telegram_semaphore_size=int(os.environ.get("TELEGRAM_SEMAPHORE_SIZE")),
+        telegram_semaphore_size=os.environ.get("TELEGRAM_SEMAPHORE_SIZE"),
     )
