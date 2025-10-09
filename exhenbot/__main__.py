@@ -134,14 +134,14 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
                             chat_id=t.chat_id,
                             text=generate_telegraph_message(gallery),
                         )
-                    except BadRequest as e:
+                    except BadRequest as err:
                         if (
-                            "Not enough rights to send" in e.message
+                            "Not enough rights to send" in err.message
                             or "Need administrator rights in the channel chat"
-                            in e.message
+                            in err.message
                         ):
                             await delete_task(t.chat_id)
-                            logger.warning(f"{e} not enough rights to send to {t.chat_id}, deleted task")
+                            logger.warning(f"{err} not enough rights to send to {t.chat_id}, deleted task")
                             try:
                                 await context.bot.leave_chat(t.chat_id)
                             except Exception:

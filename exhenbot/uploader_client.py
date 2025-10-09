@@ -99,7 +99,17 @@ class FileUploader:
                 f"Freeimage.host upload failed ({e}), fallback to 0x0.st for {url}"
             )
 
-        return await self._upload_0x0(url)
+        try:
+            uploaded_url = await self._upload_0x0(url)
+            if await self._check_content_length(uploaded_url):
+                return uploaded_url
+            logger.warning(
+                f"0x0.st returned empty content {url}"
+            )
+        except Exception as e:
+            logger.warning(f"0x0.st upload failed ({e}) {url}")
+
+        return url
 
     async def upload_image_urls(self, image_urls: List[str]) -> List[str]:
         results: List[str] = []

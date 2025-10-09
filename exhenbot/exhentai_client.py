@@ -183,6 +183,10 @@ class ExHentaiClient:
         entries: List[GalleryEntry] = []
         last_gid_value: Optional[int] = None
         anchors = doc.xpath('//td[contains(@class,"glname")]//a[contains(@href,"/g/")]')
+        if not anchors:
+            anchors = doc.xpath('//td[contains(@class,"gl2e")]//a[contains(@href,"/g/")]')
+        if not anchors:
+            anchors = doc.xpath('//div[contains(@class,"gl1t")]//a[contains(@href,"/g/")]')
         for a in anchors:
             href = a.get("href")
             if not href:
