@@ -18,7 +18,7 @@ async def retry_request(
             response.raise_for_status()
             return response
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            if e.response.status_code == 403:
+            if e.response.status_code in [403, 404, 412]:
                 logger.error(f"Request failed with status code {e.response.status_code}: {e.response.text}")
                 raise
             if attempt == max_retries:
