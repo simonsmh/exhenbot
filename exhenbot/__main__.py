@@ -70,6 +70,7 @@ async def resolve_image_urls(mpv_info: MpvInfo) -> List[str]:
                 logger.warning(f"Image dispatch failed, retrying: {e}")
         return img_url
 
+    mpv_info.images = mpv_info.images[:100]
     tasks = [_upload_with_semaphore(entry) for entry in mpv_info.images]
     uploads: List[str] = await asyncio.gather(*tasks)
     return uploads
