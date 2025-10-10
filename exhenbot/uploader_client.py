@@ -14,7 +14,7 @@ class FileUploader:
 
     def __init__(self, semaphore_size: int = 4):
         self.client = httpx.AsyncClient(
-            headers=self._HEADERS, timeout=60, follow_redirects=True, http2=True
+            headers=self._HEADERS, follow_redirects=True, http2=True
         )
         self.semaphore = asyncio.Semaphore(semaphore_size)
 
@@ -74,41 +74,37 @@ class FileUploader:
         raise RuntimeError(f"Freeimage.host upload failed: {text}")
 
     async def upload_url(self, url: str) -> str:
-        try:
-            async with self.semaphore:
+        async with self.semaphore:
+            try:
                 uploaded_url = await self._upload_catbox(url)
                 if await self._check_content_length(uploaded_url):
                     return uploaded_url
-            logger.warning(
-                f"Catbox returned empty content, fallback to freeimage.host for {url}"
-            )
-        except Exception as e:
-            logger.warning(
-                f"Catbox upload failed ({e}), fallback to freeimage.host for {url}"
-            )
+                logger.warning(
+                    f"Catbox returned empty content, fallback to freeimage.host for {url}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Catbox upload failed ({e}), fallback to freeimage.host for {url}"
+                )
 
-        try:
-            async with self.semaphore:
+            try:
                 uploaded_url = await self._upload_freeimagehost(url)
                 if await self._check_content_length(uploaded_url):
                     return uploaded_url
-            logger.warning(
-                f"Freeimage.host returned empty content, fallback to 0x0.st for {url}"
-            )
-        except Exception as e:
-            logger.warning(
-                f"Freeimage.host upload failed ({e}), fallback to 0x0.st for {url}"
-            )
+                logger.warning(
+                    f"Freeimage.host returned empty content, fallback to 0x0.st for {url}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Freeimage.host upload failed ({e}), fallback to 0x0.st for {url}"
+                )
 
-        try:
-            async with self.semaphore:
-                uploaded_url = await self._upload_0x0(url)
-                if await self._check_content_length(uploaded_url):
-                    return uploaded_url
-            logger.warning(
-                f"0x0.st returned empty content {url}"
-            )
-        except Exception as e:
-            logger.warning(f"0x0.st upload failed ({e}) {url}")
+        #     try:
+        #         uploaded_url = await self._upload_0x0(url)
+        #         if await self._check_content_length(uploaded_url):
+        #             return uploaded_url
+        #         logger.warning(f"0x0.st returned empty content {url}")
+        #     except Exception as e:
+        #         logger.warning(f"0x0.st upload failed ({e}) {url}")
 
         raise RuntimeError(f"Upload failed for {url}")

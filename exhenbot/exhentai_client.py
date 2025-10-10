@@ -184,9 +184,13 @@ class ExHentaiClient:
         last_gid_value: Optional[int] = None
         anchors = doc.xpath('//td[contains(@class,"glname")]//a[contains(@href,"/g/")]')
         if not anchors:
-            anchors = doc.xpath('//td[contains(@class,"gl2e")]//a[contains(@href,"/g/")]')
+            anchors = doc.xpath(
+                '//td[contains(@class,"gl2e")]//a[contains(@href,"/g/")]'
+            )
         if not anchors:
-            anchors = doc.xpath('//div[contains(@class,"gl1t")]//a[contains(@href,"/g/")]')
+            anchors = doc.xpath(
+                '//div[contains(@class,"gl1t")]//a[contains(@href,"/g/")]'
+            )
         for a in anchors:
             href = a.get("href")
             if not href:
@@ -318,27 +322,32 @@ class ExHentaiClient:
     async def imagedispatch(
         self, gid: int, page: int, imgkey: str, mpvkey: str, s: Optional[str] = None
     ) -> ImageDispatch:
-        payload = {
-            "method": "imagedispatch",
-            "gid": gid,
-            "page": page,
-            "imgkey": imgkey,
-            "mpvkey": mpvkey,
-        }
-        if s is not None:
-            payload["s"] = s
-        r = await retry_request(
-            self.client, method="POST", url=self.API_URL, json=payload
-        )
-        r.raise_for_status()
-        data = r.json()
-        ## check if result's i URL is accessable or retry with s
-        if data and data.get("i") is not None:
-            resp = await self.client.head(data["i"])
-            if resp.status_code != 200 and data.get("s") is not None:
-                logger.warning(f"Image dispatch failed, retrying with s: {data['i']}")
-                return await self.imagedispatch(gid, page, imgkey, mpvkey, data["s"])
-        return ImageDispatch.from_dict(data)
+        async with self.semaphore:
+            payload = {
+                "method": "imagedispatch",
+                "gid": gid,
+                "page": page,
+                "imgkey": imgkey,
+                "mpvkey": mpvkey,
+            }
+            if s is not None:
+                payload["s"] = s
+            r = await retry_request(
+                self.client, method="POST", url=self.API_URL, json=payload
+            )
+            r.raise_for_status()
+            data = r.json()
+            ## check if result's i URL is accessable or retry with s
+            if data and data.get("i") is not None:
+                resp = await self.client.head(data["i"])
+                if resp.status_code != 200 and data.get("s") is not None:
+                    logger.warning(
+                        f"Image dispatch failed, retrying with s: {data['i']}"
+                    )
+                    return await self.imagedispatch(
+                        gid, page, imgkey, mpvkey, data["s"]
+                    )
+            return ImageDispatch.from_dict(data)
 
 
 class EhTagConverter:
@@ -350,7 +359,7 @@ class EhTagConverter:
     SHA_URL = "https://cdn.jsdelivr.net/gh/EhTagTranslation/Database@release/sha"
 
     def __init__(self, local_dir: str):
-        self.client = httpx.AsyncClient(timeout=30, follow_redirects=True, http2=True)
+        self.client = httpx.AsyncClient(follow_redirects=True, http2=True)
         self.data: Dict[str, Dict[str, Dict[str, str]]] = {}
         self.sha: Optional[str] = None
         self._loaded = False

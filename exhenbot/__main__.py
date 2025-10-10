@@ -57,17 +57,17 @@ async def resolve_image_urls(mpv_info: MpvInfo) -> List[str]:
 
     async def _upload_with_semaphore(entry):
         img_url = None
+        img_dispatch_s = None
         for _ in range(3):
             try:
-                async with client.semaphore:
-                    dispatch = await client.imagedispatch(
-                        mpv_info.gid, entry.index, entry.imgkey, mpv_info.mpvkey
-                    )
-                    img_url = dispatch.i
+                dispatch = await client.imagedispatch(
+                    mpv_info.gid, entry.index, entry.imgkey, mpv_info.mpvkey, img_dispatch_s
+                )
+                img_url = dispatch.i
+                img_dispatch_s = dispatch.s
                 return await uploader.upload_url(img_url)
             except Exception as e:
                 logger.warning(f"Image dispatch failed, retrying: {e}")
-                continue
         return img_url
 
     tasks = [_upload_with_semaphore(entry) for entry in mpv_info.images]
