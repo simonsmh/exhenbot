@@ -17,6 +17,7 @@ class Settings:
 
     # File Uploader
     fileuploader_semaphore_size: int
+    fileuploader_timeout: int
 
     # Telegraph
     telegraph_author_name: str
@@ -52,6 +53,7 @@ def load_settings() -> Settings:
         exh_star=int(os.environ.get("EXH_STAR", 4)),
         exh_query_depth=int(os.environ.get("EXH_QUERY_DEPTH", 1)),
         fileuploader_semaphore_size=int(os.environ.get("FILEUPLOADER_SEMAPHORE_SIZE", 10)),
+        fileuploader_timeout=int(os.environ.get("FILEUPLOADER_TIMEOUT", 30)),
         telegraph_author_name=os.environ.get("TELEGRAPH_AUTHOR_NAME", "exhenbot"),
         telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"),
         telegraph_token=os.environ.get("TELEGRAPH_ACCESS_TOKEN"),

@@ -12,9 +12,9 @@ class FileUploader:
     FREEIMAGE_HOST_URL = "https://freeimage.host/api/1/upload"
     _HEADERS = {"user-agent": "PostmanRuntime/7.47.1"}
 
-    def __init__(self, semaphore_size: int = 4):
+    def __init__(self, semaphore_size: int = 10, timeout: int = 30):
         self.client = httpx.AsyncClient(
-            headers=self._HEADERS, follow_redirects=True, http2=True
+            headers=self._HEADERS, timeout=timeout, follow_redirects=True, http2=True
         )
         self.semaphore = asyncio.Semaphore(semaphore_size)
 

@@ -46,7 +46,7 @@ settings = load_settings()
 client = ExHentaiClient(
     cookie_header=settings.exh_cookie, semaphore_size=settings.exh_semaphore_size
 )
-uploader = FileUploader(semaphore_size=settings.fileuploader_semaphore_size)
+uploader = FileUploader(semaphore_size=settings.fileuploader_semaphore_size, timeout=settings.fileuploader_timeout)
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
 ehtag = EhTagConverter(local_dir=settings.local_dir)
 

@@ -100,7 +100,8 @@ docker run --env-file stack.env --rm exhenbot:local
   - **EXH_QUERY_DEPTH**：搜索翻页深度，默认 `1`
 
 - File Uploader
-  - **FILEUPLOADER_SEMAPHORE_SIZE**：并发度，默认 `4`
+  - **FILEUPLOADER_SEMAPHORE_SIZE**：并发度，默认 `10`
+  - **FILEUPLOADER_TIMEOUT**：超时时间（秒），默认 `30`
 
 - Telegraph
   - **TELEGRAPH_AUTHOR_NAME**：默认 `exhenbot`
