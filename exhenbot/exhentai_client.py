@@ -340,21 +340,6 @@ class ExHentaiClient:
                 return await self.imagedispatch(gid, page, imgkey, mpvkey, data["s"])
         return ImageDispatch.from_dict(data)
 
-    async def resolve_image_urls(self, mpv_info: MpvInfo) -> List[str]:
-        if not mpv_info.mpvkey:
-            raise ValueError("mpvkey not found. Cannot call imagedispatch.")
-
-        async def _dispatch_with_semaphore(entry):
-            async with self.semaphore:
-                return await self.imagedispatch(
-                    mpv_info.gid, entry.index, entry.imgkey, mpv_info.mpvkey
-                )
-
-        tasks = [_dispatch_with_semaphore(entry) for entry in mpv_info.images]
-        dispatches: List[ImageDispatch] = await asyncio.gather(*tasks)
-        urls = [dispatch.i for dispatch in dispatches]
-        return urls
-
 
 class EhTagConverter:
     """Converter for Ehentai tags using EhTagTranslation database."""

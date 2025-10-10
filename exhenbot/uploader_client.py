@@ -1,5 +1,4 @@
 import asyncio
-from typing import List, Optional
 
 import httpx
 from loguru import logger
@@ -76,9 +75,10 @@ class FileUploader:
 
     async def upload_url(self, url: str) -> str:
         try:
-            uploaded_url = await self._upload_catbox(url)
-            if await self._check_content_length(uploaded_url):
-                return uploaded_url
+            async with self.semaphore:
+                uploaded_url = await self._upload_catbox(url)
+                if await self._check_content_length(uploaded_url):
+                    return uploaded_url
             logger.warning(
                 f"Catbox returned empty content, fallback to freeimage.host for {url}"
             )
@@ -88,9 +88,10 @@ class FileUploader:
             )
 
         try:
-            uploaded_url = await self._upload_freeimagehost(url)
-            if await self._check_content_length(uploaded_url):
-                return uploaded_url
+            async with self.semaphore:
+                uploaded_url = await self._upload_freeimagehost(url)
+                if await self._check_content_length(uploaded_url):
+                    return uploaded_url
             logger.warning(
                 f"Freeimage.host returned empty content, fallback to 0x0.st for {url}"
             )
@@ -100,29 +101,14 @@ class FileUploader:
             )
 
         try:
-            uploaded_url = await self._upload_0x0(url)
-            if await self._check_content_length(uploaded_url):
-                return uploaded_url
+            async with self.semaphore:
+                uploaded_url = await self._upload_0x0(url)
+                if await self._check_content_length(uploaded_url):
+                    return uploaded_url
             logger.warning(
                 f"0x0.st returned empty content {url}"
             )
         except Exception as e:
             logger.warning(f"0x0.st upload failed ({e}) {url}")
 
-        return url
-
-    async def upload_image_urls(self, image_urls: List[str]) -> List[str]:
-        results: List[str] = []
-
-        async def upload_with_semaphore(url: str) -> Optional[str]:
-            async with self.semaphore:
-                try:
-                    return await self.upload_url(url)
-                except Exception as e:
-                    logger.error(f"Upload failed for {url}: {e}")
-                    return None
-
-        tasks = [upload_with_semaphore(url) for url in image_urls]
-        results = await asyncio.gather(*tasks)
-
-        return results
+        raise RuntimeError(f"Upload failed for {url}")

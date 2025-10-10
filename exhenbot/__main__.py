@@ -1,5 +1,6 @@
+import asyncio
 import re
-from typing import Any
+from typing import Any, List
 
 from loguru import logger
 from telegram import (
@@ -24,7 +25,7 @@ from telegram.ext import (
 from telegram.helpers import escape_markdown
 
 from .config import load_settings
-from .exhentai_client import EhTagConverter, ExHentaiClient
+from .exhentai_client import EhTagConverter, ExHentaiClient, MpvInfo
 from .storage import (
     Gallery,
     TaskData,
@@ -45,11 +46,33 @@ settings = load_settings()
 client = ExHentaiClient(
     cookie_header=settings.exh_cookie, semaphore_size=settings.exh_semaphore_size
 )
-uploader = FileUploader(
-    semaphore_size=settings.fileuploader_semaphore_size
-)
+uploader = FileUploader(semaphore_size=settings.fileuploader_semaphore_size)
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
 ehtag = EhTagConverter(local_dir=settings.local_dir)
+
+
+async def resolve_image_urls(mpv_info: MpvInfo) -> List[str]:
+    if not mpv_info.mpvkey:
+        raise ValueError("mpvkey not found. Cannot call imagedispatch.")
+
+    async def _upload_with_semaphore(entry):
+        img_url = None
+        for _ in range(3):
+            try:
+                async with client.semaphore:
+                    dispatch = await client.imagedispatch(
+                        mpv_info.gid, entry.index, entry.imgkey, mpv_info.mpvkey
+                    )
+                    img_url = dispatch.i
+                return await uploader.upload_url(img_url)
+            except Exception as e:
+                logger.warning(f"Image dispatch failed, retrying: {e}")
+                continue
+        return img_url
+
+    tasks = [_upload_with_semaphore(entry) for entry in mpv_info.images]
+    uploads: List[str] = await asyncio.gather(*tasks)
+    return uploads
 
 
 async def parse_url(
@@ -73,9 +96,7 @@ async def parse_url(
         return exist
     mpv_info = await client.fetch_mpv_info(url)
     logger.info(f"Fetching MPV info: {gallery_info.gid} {gallery_info.title}")
-    img_urls = await client.resolve_image_urls(mpv_info)
-    logger.info(f"Uploading image URLs: {gallery_info.gid} {gallery_info.title}")
-    uploader_urls = await uploader.upload_image_urls(img_urls)
+    uploader_urls = await resolve_image_urls(mpv_info)
     logger.info(f"Translating tags: {gallery_info.gid} {gallery_info.title}")
     await ehtag.load_database()
     tags_dict = ehtag.batch_translate_tags(gallery_info.tags)
@@ -141,7 +162,9 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
                             in err.message
                         ):
                             await delete_task(t.chat_id)
-                            logger.warning(f"{err} not enough rights to send to {t.chat_id}, deleted task")
+                            logger.warning(
+                                f"{err} not enough rights to send to {t.chat_id}, deleted task"
+                            )
                             try:
                                 await context.bot.leave_chat(t.chat_id)
                             except Exception:
