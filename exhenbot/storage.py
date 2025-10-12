@@ -17,6 +17,8 @@ class Gallery(models.Model):
     title = fields.TextField()
     telegraph_url = fields.TextField()
     created_at = fields.DatetimeField(auto_now_add=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+    chat_ids = fields.JSONField(null=True)
 
     class Meta:
         table = "gallery"
@@ -93,7 +95,12 @@ async def get_all_tasks() -> List[Task]:
 
 
 async def upsert_gallery(
-    gid: int, url: str, tags: dict, title: str, telegraph_url: str
+    gid: int,
+    url: str,
+    tags: dict,
+    title: str,
+    telegraph_url: str,
+    chat_id: int | None = None,
 ) -> Gallery:
     existing = await get_gallery(gid)
     if existing:
@@ -101,10 +108,18 @@ async def upsert_gallery(
         existing.tags = tags
         existing.title = title
         existing.telegraph_url = telegraph_url
+        existing.chat_ids = existing.chat_ids or []
+        if chat_id and chat_id not in existing.chat_ids:
+            existing.chat_ids.append(chat_id)
         await existing.save()
         return existing
     return await Gallery.create(
-        gid=gid, url=url, tags=tags, title=title, telegraph_url=telegraph_url
+        gid=gid,
+        url=url,
+        tags=tags,
+        title=title,
+        telegraph_url=telegraph_url,
+        chat_ids=[chat_id] if chat_id else [],
     )
 
 

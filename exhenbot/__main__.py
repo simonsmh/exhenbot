@@ -82,6 +82,7 @@ async def parse_url(
     author_url: str | None = None,
     send_if_exists: bool = True,
     force_update: bool = False,
+    chat_id: int | None = None,
 ) -> Gallery | None:
     if author_name is None:
         author_name = settings.telegraph_author_name
@@ -92,8 +93,13 @@ async def parse_url(
     exist = await get_gallery(gallery_info.gid) if not force_update else None
     if exist is not None:
         logger.info(f"Gallery already exists: {gallery_info.gid} {gallery_info.title}")
-        if not send_if_exists:
+        exist.chat_ids = exist.chat_ids or []
+        already_sent = chat_id and chat_id in exist.chat_ids
+        if not send_if_exists and already_sent:
             return
+        if chat_id and not already_sent:
+            exist.chat_ids.append(chat_id)
+            await exist.save()
         return exist
     mpv_info = await client.fetch_mpv_info(url)
     logger.info(f"Fetching MPV info: {gallery_info.gid} {gallery_info.title}")
@@ -117,6 +123,7 @@ async def parse_url(
         tags=tags_dict,
         title=gallery_info.title,
         telegraph_url=telegraph_url,
+        chat_id=chat_id,
     )
 
 
@@ -145,6 +152,7 @@ async def job_process(context: ContextTypes.DEFAULT_TYPE):
                         author_name=t.author_name,
                         author_url=t.author_url,
                         send_if_exists=False,
+                        chat_id=t.chat_id,
                     )
                 except Exception as err:
                     logger.error(f"Error parsing gallery: {e} {err}")
