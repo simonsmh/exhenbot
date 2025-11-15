@@ -21,9 +21,10 @@ class FileUploader:
     async def aclose(self) -> None:
         await self.client.aclose()
 
-    async def _check_content_length(self, url: str) -> bool:
+    async def _check_content(self, url: str) -> bool:
         try:
             resp = await self.client.head(url)
+            resp.raise_for_status()
             length = int(resp.headers.get("Content-Length", "0"))
             return length > 0
         except Exception as e:
@@ -77,7 +78,7 @@ class FileUploader:
         async with self.semaphore:
             try:
                 uploaded_url = await self._upload_catbox(url)
-                if await self._check_content_length(uploaded_url):
+                if await self._check_content(uploaded_url):
                     return uploaded_url
                 logger.warning(
                     f"Catbox returned empty content, fallback to freeimage.host for {url}"
@@ -89,7 +90,7 @@ class FileUploader:
 
             try:
                 uploaded_url = await self._upload_freeimagehost(url)
-                if await self._check_content_length(uploaded_url):
+                if await self._check_content(uploaded_url):
                     return uploaded_url
                 logger.warning(
                     f"Freeimage.host returned empty content, fallback to 0x0.st for {url}"

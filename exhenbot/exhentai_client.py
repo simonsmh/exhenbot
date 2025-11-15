@@ -236,6 +236,7 @@ class ExHentaiClient:
             gid = None
 
         # Title: prefer english title in #gj, fallback to #gn or <title>
+        title = None
         title_node = doc.xpath('//h1[@id="gj"]')
         if title_node:
             title = title_node[0].text_content().strip()

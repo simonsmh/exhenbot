@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17
     env_file: 
       - stack.env
     volumes:
@@ -10,6 +10,18 @@ services:
     restart: always
     networks:
       - internal_network
+
+  # postgres-18:
+  #   image: postgres:18
+  #   env_file: 
+  #     - stack.env
+  #   environment:
+  #     PGDATA: /var/lib/postgresql/18/docker
+  #   volumes:
+  #     - postgres-data:/var/lib/postgresql/18/docker
+  #   restart: always
+  #   networks:
+  #     - internal_network
 
   exhenbot:
     image: ghcr.io/simonsmh/exhenbot:main
