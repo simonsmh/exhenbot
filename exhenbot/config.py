@@ -26,6 +26,7 @@ class Settings:
 
     # Database
     db_url: str
+    table_prefix: str
 
     # Telegram
     telegram_bot_token: str
@@ -58,6 +59,7 @@ def load_settings() -> Settings:
         telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"),
         telegraph_token=os.environ.get("TELEGRAPH_ACCESS_TOKEN"),
         db_url=os.environ.get("DATABASE_URL"),
+        table_prefix=os.environ.get("DATABASE_TABLE_PREFIX", ""),
         telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN"),
         telegram_job_interval=int(os.environ.get("TELEGRAM_JOB_INTERVAL", 600)),
         telegram_domain=os.environ.get("TELEGRAM_DOMAIN"),

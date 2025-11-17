@@ -21,7 +21,7 @@ class Gallery(models.Model):
     chat_ids = fields.JSONField(null=True)
 
     class Meta:
-        table = "gallery"
+        table = f"{settings.table_prefix}gallery"
 
 
 class Task(models.Model):
@@ -36,7 +36,7 @@ class Task(models.Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta:
-        table = "task"
+        table = f"{settings.table_prefix}task"
 
 
 @dataclass
