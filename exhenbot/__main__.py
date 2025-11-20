@@ -46,7 +46,18 @@ settings = load_settings()
 client = ExHentaiClient(
     cookie_header=settings.exh_cookie, semaphore_size=settings.exh_semaphore_size
 )
-uploader = FileUploader(semaphore_size=settings.fileuploader_semaphore_size, timeout=settings.fileuploader_timeout)
+uploader = FileUploader(
+    semaphore_size=settings.fileuploader_semaphore_size,
+    timeout=settings.fileuploader_timeout,
+    s3_config={
+        "endpoint": settings.s3_endpoint,
+        "access_key": settings.s3_access_key,
+        "secret_key": settings.s3_secret_key,
+        "bucket": settings.s3_bucket,
+        "region": settings.s3_region,
+        "public_url": settings.s3_public_url,
+    },
+)
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
 ehtag = EhTagConverter(local_dir=settings.local_dir)
 

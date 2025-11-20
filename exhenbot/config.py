@@ -19,6 +19,14 @@ class Settings:
     fileuploader_semaphore_size: int
     fileuploader_timeout: int
 
+    # S3
+    s3_endpoint: str
+    s3_access_key: str
+    s3_secret_key: str
+    s3_bucket: str
+    s3_region: str
+    s3_public_url: str
+
     # Telegraph
     telegraph_author_name: str
     telegraph_author_url: str
@@ -55,6 +63,12 @@ def load_settings() -> Settings:
         exh_query_depth=int(os.environ.get("EXH_QUERY_DEPTH", 1)),
         fileuploader_semaphore_size=int(os.environ.get("FILEUPLOADER_SEMAPHORE_SIZE", 10)),
         fileuploader_timeout=int(os.environ.get("FILEUPLOADER_TIMEOUT", 30)),
+        s3_endpoint=os.environ.get("S3_ENDPOINT"),
+        s3_access_key=os.environ.get("S3_ACCESS_KEY"),
+        s3_secret_key=os.environ.get("S3_SECRET_KEY"),
+        s3_bucket=os.environ.get("S3_BUCKET"),
+        s3_region=os.environ.get("S3_REGION"),
+        s3_public_url=os.environ.get("S3_PUBLIC_URL"),
         telegraph_author_name=os.environ.get("TELEGRAPH_AUTHOR_NAME", "exhenbot"),
         telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"),
         telegraph_token=os.environ.get("TELEGRAPH_ACCESS_TOKEN"),
