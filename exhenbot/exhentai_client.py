@@ -355,9 +355,9 @@ class EhTagConverter:
     """Converter for Ehentai tags using EhTagTranslation database."""
 
     DB_URL = (
-        "https://cdn.jsdelivr.net/gh/EhTagTranslation/Database@release/db.full.json"
+        "https://github.com/EhTagTranslation/Database/releases/latest/download/db.full.json"
     )
-    SHA_URL = "https://cdn.jsdelivr.net/gh/EhTagTranslation/Database@release/sha"
+    SHA_URL = "https://github.com/EhTagTranslation/Database/releases/latest/download/sha"
 
     def __init__(self, local_dir: str):
         self.client = httpx.AsyncClient(follow_redirects=True, http2=True)
