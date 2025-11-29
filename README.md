@@ -48,7 +48,7 @@ docker compose up -d
 
 compose 默认使用镜像 `ghcr.io/simonsmh/exhenbot:main`，也可以自行构建（见下）。
 
-### 方式二：本地运行（Python 3.13）
+### 方式二：本地运行（Python 3.14）
 
 使用 uv（推荐）：
 
