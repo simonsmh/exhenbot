@@ -26,6 +26,7 @@ class Settings:
     s3_bucket: str
     s3_region: str
     s3_public_url: str
+    s3_prefix: str
 
     # Telegraph
     telegraph_author_name: str
@@ -57,11 +58,15 @@ def load_settings() -> Settings:
         task_check=os.environ.get("TASK_CHECK", "exhenbot:exhenbot"),
         exh_cookie=os.environ.get("EXH_COOKIE"),
         exh_semaphore_size=int(os.environ.get("EXH_SEMAPHORE_SIZE", 4)),
-        exh_query=os.environ.get("EXH_QUERY", "parody:\"blue archive$\" language:chinese$"),
+        exh_query=os.environ.get(
+            "EXH_QUERY", 'parody:"blue archive$" language:chinese$'
+        ),
         exh_catogories=int(os.environ.get("EXH_CATOGORIES", 1017)),
         exh_star=int(os.environ.get("EXH_STAR", 4)),
         exh_query_depth=int(os.environ.get("EXH_QUERY_DEPTH", 1)),
-        fileuploader_semaphore_size=int(os.environ.get("FILEUPLOADER_SEMAPHORE_SIZE", 10)),
+        fileuploader_semaphore_size=int(
+            os.environ.get("FILEUPLOADER_SEMAPHORE_SIZE", 10)
+        ),
         fileuploader_timeout=int(os.environ.get("FILEUPLOADER_TIMEOUT", 30)),
         s3_endpoint=os.environ.get("S3_ENDPOINT"),
         s3_access_key=os.environ.get("S3_ACCESS_KEY"),
@@ -69,8 +74,11 @@ def load_settings() -> Settings:
         s3_bucket=os.environ.get("S3_BUCKET"),
         s3_region=os.environ.get("S3_REGION"),
         s3_public_url=os.environ.get("S3_PUBLIC_URL"),
+        s3_prefix=os.environ.get("S3_PREFIX", "exhenbot"),
         telegraph_author_name=os.environ.get("TELEGRAPH_AUTHOR_NAME", "exhenbot"),
-        telegraph_author_url=os.environ.get("TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"),
+        telegraph_author_url=os.environ.get(
+            "TELEGRAPH_AUTHOR_URL", "https://t.me/exhenbot"
+        ),
         telegraph_token=os.environ.get("TELEGRAPH_ACCESS_TOKEN"),
         db_url=os.environ.get("DATABASE_URL"),
         table_prefix=os.environ.get("DATABASE_TABLE_PREFIX", ""),
@@ -79,8 +87,12 @@ def load_settings() -> Settings:
         telegram_domain=os.environ.get("TELEGRAM_DOMAIN"),
         telegram_host=os.environ.get("TELEGRAM_HOST"),
         telegram_port=os.environ.get("TELEGRAM_PORT"),
-        telegram_api_base_url=os.environ.get("TELEGRAM_API_BASE_URL", "https://api.telegram.org/bot"),
-        telegram_api_base_file_url=os.environ.get("TELEGRAM_API_BASE_FILE_URL", "https://api.telegram.org/file/bot"),
+        telegram_api_base_url=os.environ.get(
+            "TELEGRAM_API_BASE_URL", "https://api.telegram.org/bot"
+        ),
+        telegram_api_base_file_url=os.environ.get(
+            "TELEGRAM_API_BASE_FILE_URL", "https://api.telegram.org/file/bot"
+        ),
         telegram_local_mode=os.environ.get("TELEGRAM_LOCAL_MODE", "false") == "true",
         telegram_semaphore_size=os.environ.get("TELEGRAM_SEMAPHORE_SIZE"),
     )

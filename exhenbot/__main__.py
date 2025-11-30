@@ -56,6 +56,7 @@ uploader = FileUploader(
         "bucket": settings.s3_bucket,
         "region": settings.s3_region,
         "public_url": settings.s3_public_url,
+        "prefix": settings.s3_prefix,
     },
 )
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
@@ -72,7 +73,11 @@ async def resolve_image_urls(mpv_info: MpvInfo) -> List[str]:
         for _ in range(3):
             try:
                 dispatch = await client.imagedispatch(
-                    mpv_info.gid, entry.index, entry.imgkey, mpv_info.mpvkey, img_dispatch_s
+                    mpv_info.gid,
+                    entry.index,
+                    entry.imgkey,
+                    mpv_info.mpvkey,
+                    img_dispatch_s,
                 )
                 img_url = dispatch.i
                 img_dispatch_s = dispatch.s

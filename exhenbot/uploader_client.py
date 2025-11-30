@@ -104,6 +104,15 @@ class FileUploader:
 
         filename = hashlib.md5(url.encode()).hexdigest() + ext
 
+        # Add prefix/path if configured
+        prefix = self.s3_config.get("prefix")
+        if prefix:
+            # Ensure prefix doesn't start with / but ends with /
+            prefix = prefix.lstrip("/").rstrip("/") + "/"
+            s3_key = prefix + filename
+        else:
+            s3_key = filename
+
         session = aiobotocore.session.get_session()
         async with session.create_client(
             "s3",
@@ -114,24 +123,18 @@ class FileUploader:
         ) as client:
             await client.put_object(
                 Bucket=self.s3_config.get("bucket"),
-                Key=filename,
+                Key=s3_key,
                 Body=content,
                 ContentType=content_type or "application/octet-stream",
             )
 
         public_url_base = self.s3_config.get("public_url")
         if public_url_base:
-            return f"{public_url_base.rstrip('/')}/{filename}"
-        return f"{self.s3_config.get('endpoint').rstrip('/')}/{self.s3_config.get('bucket')}/{filename}"
+            return f"{public_url_base.rstrip('/')}/{s3_key}"
+        return f"{self.s3_config.get('endpoint').rstrip('/')}/{self.s3_config.get('bucket')}/{s3_key}"
 
     async def upload_url(self, url: str) -> str:
         async with self.semaphore:
-            if self.s3_config and self.s3_config.get("endpoint"):
-                try:
-                    return await self._upload_s3(url)
-                except Exception as e:
-                    logger.warning(f"S3 upload failed ({e}), fallback to catbox for {url}")
-
             try:
                 uploaded_url = await self._upload_catbox(url)
                 if await self._check_content(uploaded_url):
@@ -144,6 +147,22 @@ class FileUploader:
                     f"Catbox upload failed ({e}), fallback to freeimage.host for {url}"
                 )
 
+            if self.s3_config and self.s3_config.get("endpoint"):
+                try:
+                    return await self._upload_s3(url)
+                except Exception as e:
+                    logger.warning(
+                        f"S3 upload failed ({e}), fallback to catbox for {url}"
+                    )
+
+            try:
+                uploaded_url = await self._upload_0x0(url)
+                if await self._check_content_length(uploaded_url):
+                    return uploaded_url
+                logger.warning(f"0x0.st returned empty content {url}")
+            except Exception as e:
+                logger.warning(f"0x0.st upload failed ({e}) {url}")
+
             try:
                 uploaded_url = await self._upload_freeimagehost(url)
                 if await self._check_content(uploaded_url):
@@ -155,13 +174,5 @@ class FileUploader:
                 logger.warning(
                     f"Freeimage.host upload failed ({e}), fallback to 0x0.st for {url}"
                 )
-
-        #     try:
-        #         uploaded_url = await self._upload_0x0(url)
-        #         if await self._check_content_length(uploaded_url):
-        #             return uploaded_url
-        #         logger.warning(f"0x0.st returned empty content {url}")
-        #     except Exception as e:
-        #         logger.warning(f"0x0.st upload failed ({e}) {url}")
 
         raise RuntimeError(f"Upload failed for {url}")
