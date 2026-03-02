@@ -13,8 +13,6 @@ from .utils import retry_request
 
 class FileUploader:
     CATBOX_URL = "https://catbox.moe/user/api.php"
-    ZEROXZERO_URL = "https://0x0.st"
-    FREEIMAGE_HOST_URL = "https://freeimage.host/api/1/upload"
     _HEADERS = {"user-agent": "PostmanRuntime/7.47.1"}
 
     def __init__(
@@ -52,35 +50,6 @@ class FileUploader:
         if text.startswith("http"):
             return text
         raise RuntimeError(f"Catbox upload failed: {text}")
-
-    async def _upload_0x0(self, url: str) -> str:
-        data = {"url": url}
-        r = await retry_request(
-            self.client,
-            method="POST",
-            url=self.ZEROXZERO_URL,
-            data=data,
-        )
-        r.raise_for_status()
-        text = r.text.strip()
-        if text.startswith("http"):
-            return text
-        raise RuntimeError(f"0x0.st upload failed: {text}")
-
-    async def _upload_freeimagehost(self, url: str) -> str:
-        data = {
-            "key": "6d207e02198a847aa98d0a2a901485a5",
-            "source": url,
-            "format": "txt",
-        }
-        r = await retry_request(
-            self.client, method="POST", url=self.FREEIMAGE_HOST_URL, data=data
-        )
-        r.raise_for_status()
-        text = r.text.strip()
-        if text.startswith("http"):
-            return text
-        raise RuntimeError(f"Freeimage.host upload failed: {text}")
 
     async def _upload_s3(self, url: str) -> str:
         if not self.s3_config or not self.s3_config.get("endpoint"):
@@ -140,11 +109,11 @@ class FileUploader:
                 if await self._check_content(uploaded_url):
                     return uploaded_url
                 logger.warning(
-                    f"Catbox returned empty content, fallback to freeimage.host for {url}"
+                    f"Catbox returned empty content, fallback to s3 for {url}"
                 )
             except Exception as e:
                 logger.warning(
-                    f"Catbox upload failed ({e}), fallback to freeimage.host for {url}"
+                    f"Catbox upload failed ({e}), fallback to s3 for {url}"
                 )
 
             if self.s3_config and self.s3_config.get("endpoint"):
@@ -152,27 +121,7 @@ class FileUploader:
                     return await self._upload_s3(url)
                 except Exception as e:
                     logger.warning(
-                        f"S3 upload failed ({e}), fallback to catbox for {url}"
+                        f"S3 upload failed ({e}) for {url}"
                     )
-
-            try:
-                uploaded_url = await self._upload_0x0(url)
-                if await self._check_content_length(uploaded_url):
-                    return uploaded_url
-                logger.warning(f"0x0.st returned empty content {url}")
-            except Exception as e:
-                logger.warning(f"0x0.st upload failed ({e}) {url}")
-
-            try:
-                uploaded_url = await self._upload_freeimagehost(url)
-                if await self._check_content(uploaded_url):
-                    return uploaded_url
-                logger.warning(
-                    f"Freeimage.host returned empty content, fallback to 0x0.st for {url}"
-                )
-            except Exception as e:
-                logger.warning(
-                    f"Freeimage.host upload failed ({e}), fallback to 0x0.st for {url}"
-                )
 
         raise RuntimeError(f"Upload failed for {url}")
