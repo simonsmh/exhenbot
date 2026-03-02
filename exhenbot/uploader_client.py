@@ -21,9 +21,14 @@ class FileUploader:
         timeout: int = 30,
         s3_config: dict = None,
         imgbb_api_key: str = None,
+        proxy: str = None,
     ):
         self.client = httpx.AsyncClient(
-            headers=self._HEADERS, timeout=timeout, follow_redirects=True, http2=True
+            headers=self._HEADERS,
+            timeout=timeout,
+            follow_redirects=True,
+            http2=True,
+            proxy=proxy or None,
         )
         self.semaphore = asyncio.Semaphore(semaphore_size)
         self.s3_config = s3_config

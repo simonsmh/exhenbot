@@ -59,6 +59,7 @@ uploader = FileUploader(
         "prefix": settings.s3_prefix,
     },
     imgbb_api_key=settings.imgbb_api_key,
+    proxy=settings.fileuploader_proxy,
 )
 telegraph = TelegraphClient(access_token=settings.telegraph_token)
 ehtag = EhTagConverter(local_dir=settings.local_dir)
