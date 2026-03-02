@@ -16,13 +16,18 @@ class FileUploader:
     _HEADERS = {"user-agent": "PostmanRuntime/7.47.1"}
 
     def __init__(
-        self, semaphore_size: int = 10, timeout: int = 30, s3_config: dict = None
+        self,
+        semaphore_size: int = 10,
+        timeout: int = 30,
+        s3_config: dict = None,
+        imgbb_api_key: str = None,
     ):
         self.client = httpx.AsyncClient(
             headers=self._HEADERS, timeout=timeout, follow_redirects=True, http2=True
         )
         self.semaphore = asyncio.Semaphore(semaphore_size)
         self.s3_config = s3_config
+        self.imgbb_api_key = imgbb_api_key
 
     async def aclose(self) -> None:
         await self.client.aclose()
@@ -102,26 +107,48 @@ class FileUploader:
             return f"{public_url_base.rstrip('/')}/{s3_key}"
         return f"{self.s3_config.get('endpoint').rstrip('/')}/{self.s3_config.get('bucket')}/{s3_key}"
 
+    async def _upload_imgbb(self, url: str) -> str:
+        if not self.imgbb_api_key:
+            raise RuntimeError("IMGBB_API_KEY not configured")
+        r = await retry_request(
+            self.client,
+            method="POST",
+            url="https://api.imgbb.com/1/upload",
+            data={"key": self.imgbb_api_key, "image": url},
+        )
+        r.raise_for_status()
+        data = r.json()
+        if data.get("success") and data.get("data", {}).get("url"):
+            return data["data"]["url"]
+        raise RuntimeError(f"imgbb upload failed: {data}")
+
     async def upload_url(self, url: str) -> str:
         async with self.semaphore:
-            try:
-                uploaded_url = await self._upload_catbox(url)
-                if await self._check_content(uploaded_url):
-                    return uploaded_url
-                logger.warning(
-                    f"Catbox returned empty content, fallback to s3 for {url}"
-                )
-            except Exception as e:
-                logger.warning(
-                    f"Catbox upload failed ({e}), fallback to s3 for {url}"
-                )
+            if self.imgbb_api_key:
+                try:
+                    uploaded_url = await self._upload_imgbb(url)
+                    if await self._check_content(uploaded_url):
+                        return uploaded_url
+                    logger.warning(f"imgbb returned empty content for {url}")
+                except Exception as e:
+                    logger.warning(f"imgbb upload failed ({e}) for {url}")
 
             if self.s3_config and self.s3_config.get("endpoint"):
                 try:
                     return await self._upload_s3(url)
                 except Exception as e:
-                    logger.warning(
-                        f"S3 upload failed ({e}) for {url}"
-                    )
+                    logger.warning(f"S3 upload failed ({e}) for {url}")
+
+            try:
+                uploaded_url = await self._upload_catbox(url)
+                if await self._check_content(uploaded_url):
+                    return uploaded_url
+                logger.warning(
+                    f"Catbox returned empty content, fallback to imgbb for {url}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Catbox upload failed ({e}), fallback to imgbb for {url}"
+                )
 
         raise RuntimeError(f"Upload failed for {url}")

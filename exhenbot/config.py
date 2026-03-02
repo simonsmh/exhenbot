@@ -18,6 +18,7 @@ class Settings:
     # File Uploader
     fileuploader_semaphore_size: int
     fileuploader_timeout: int
+    imgbb_api_key: str
 
     # S3
     s3_endpoint: str
@@ -68,6 +69,7 @@ def load_settings() -> Settings:
             os.environ.get("FILEUPLOADER_SEMAPHORE_SIZE", 10)
         ),
         fileuploader_timeout=int(os.environ.get("FILEUPLOADER_TIMEOUT", 30)),
+        imgbb_api_key=os.environ.get("IMGBB_API_KEY"),
         s3_endpoint=os.environ.get("S3_ENDPOINT"),
         s3_access_key=os.environ.get("S3_ACCESS_KEY"),
         s3_secret_key=os.environ.get("S3_SECRET_KEY"),
