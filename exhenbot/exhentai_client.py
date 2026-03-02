@@ -117,9 +117,14 @@ class ExHentaiClient:
     BASE_URL = "https://exhentai.org"
     API_URL = "https://s.exhentai.org/api.php"
     RESET_URL = "https://e-hentai.org/home.php"
+    DEFAULT_USER_AGENT = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/145.0.0.0 Safari/537.36"
+    )
 
     def __init__(self, cookie_header: Optional[str] = None, semaphore_size: int = 4):
-        headers = {}
+        headers = {"User-Agent": self.DEFAULT_USER_AGENT}
         if cookie_header:
             headers["Cookie"] = cookie_header
         self.client = httpx.AsyncClient(
@@ -177,6 +182,12 @@ class ExHentaiClient:
             self.client, method="GET", url=self.BASE_URL + "/", params=params
         )
         resp.raise_for_status()
+        if not resp.text or not resp.text.strip():
+            logger.warning(
+                f"Empty response from search (status={resp.status_code}, "
+                f"url={resp.url}, headers={dict(resp.headers)}), skipping"
+            )
+            return [], None
         doc = lxml_html.fromstring(resp.text)
 
         # Prefer structured rows under the name cell which contains href, glink, and gt tags
@@ -223,6 +234,8 @@ class ExHentaiClient:
     async def get_gallery_info(self, gallery_url: str) -> GalleryInfo:
         resp = await retry_request(self.client, method="GET", url=gallery_url)
         resp.raise_for_status()
+        if not resp.text or not resp.text.strip():
+            raise RuntimeError(f"Empty response from gallery page: {gallery_url}")
         doc = lxml_html.fromstring(resp.text)
 
         # Parse gid from URL (/g/<gid>/<token>/...)
