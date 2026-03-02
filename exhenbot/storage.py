@@ -74,6 +74,7 @@ async def db_init(db_url: Optional[str]) -> None:
     await Tortoise.init(
         db_url=db_url or "sqlite://./cache.db",
         modules={"models": [__name__]},
+        _enable_global_fallback=True,
     )
     await Tortoise.generate_schemas()
 
