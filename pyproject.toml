@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
     "httpx[http2]>=0.27.2",
-    "lxml>=6.0.1",
+    "lxml>=6.1.0",
     "tortoise-orm[accel]>=0.21.6",
     "aiosqlite>=0.20.0",
     "python-telegram-bot[all]>=21.6",
